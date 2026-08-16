@@ -22,7 +22,7 @@ struct ContentView: View {
                     Label("히스토리", systemImage: "chart.line.uptrend.xyaxis")
                 }
 
-            PersonalRecordPlaceholderView()
+            PersonalRecordListView()
                 .tabItem {
                     Label("PR", systemImage: "trophy")
                 }
