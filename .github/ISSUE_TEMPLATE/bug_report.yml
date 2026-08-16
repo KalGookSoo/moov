@@ -1,0 +1,95 @@
+name: 버그 리포트
+description: BDD(Given/When/Then) 형식으로 재현/기대/실제 동작을 기술해 버그를 보고하세요.
+title: "[버그] "
+labels: [bug]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        감사합니다! 이 템플릿은 행위 주도 개발(BDD) 형식에 맞춰 버그를 명확히 기술하도록 돕습니다.
+        - 핵심은 "Given/When/Then/But"(기대/실제) 구조입니다.
+        - 스크린샷/에러 로그 첨부 권장, 민감 정보는 마스킹하세요.
+  - type: input
+    id: scenario_title
+    attributes:
+      label: 시나리오 제목
+      description: 어떤 상황의 버그인지 한 줄로 요약하세요.
+      placeholder: 예) 채널 목록 무한 스크롤 시 로딩 스피너 고정
+    validations:
+      required: true
+  - type: textarea
+    id: given
+    attributes:
+      label: Given(전제 조건)
+      description: 버그 재현 전 상태/데이터/환경. 계정/권한/사전 단계 등.
+      placeholder: |
+        예)
+        - 로그인된 사용자이며 채널이 50개 이상 존재함
+        - 네트워크는 정상(>50Mbps)
+    validations:
+      required: true
+  - type: textarea
+    id: when
+    attributes:
+      label: When(행동)
+      description: 사용자가 수행한 구체적 행동을 단계로 작성하세요.
+      placeholder: |
+        예)
+        1) 채널 목록 페이지 접속
+        2) 스크롤을 바닥까지 내림
+        3) 다음 페이지 로딩을 기다림(3초)
+    validations:
+      required: true
+  - type: textarea
+    id: then_expected
+    attributes:
+      label: Then(기대 결과)
+      description: 정상이라면 어떻게 보여야/동작해야 하는지.
+      placeholder: |
+        예) 추가 채널이 로드되고 스피너가 사라진다.
+    validations:
+      required: true
+  - type: textarea
+    id: but_actual
+    attributes:
+      label: But(실제 결과)
+      description: 실제로 관찰된 결과를 정확히 적어 주세요.
+      placeholder: |
+        예) 스피너가 사라지지 않고 UI가 멈춘 것처럼 보임. 콘솔에 TypeError 발생.
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: 환경 정보
+      description: OS, 브라우저, 앱 버전 등
+      placeholder: |
+        - OS: macOS 14.5
+        - 브라우저: Chrome 130
+        - 앱 버전: v1.2.3
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 스크린샷/영상(선택)
+      description: 가능하면 문제를 보여주는 이미지/GIF/영상 링크를 첨부하세요.
+      placeholder: 이미지 또는 링크 첨부
+  - type: textarea
+    id: logs
+    attributes:
+      label: 관련 로그(선택)
+      description: 스택 트레이스/네트워크 로그 등을 붙여넣어 주세요.
+  - type: textarea
+    id: notes
+    attributes:
+      label: 가능한 원인/해결 아이디어(선택)
+      description: 원인 추정, 가설, 임시 우회 방법, 관련 이슈 링크 등.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 체크리스트
+      options:
+        - label: 중복 이슈를 검색했습니다
+          required: true
+        - label: 재현 절차와 환경 정보를 기입했습니다
+          required: true
