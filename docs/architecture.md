@@ -67,4 +67,3 @@ flowchart LR
 ## 미해결 사항
 
 - **iCloud 동기화 여부**: 현재 `moovApp.swift`는 로컬 전용 `ModelConfiguration`을 사용한다. 기기 간 동기화(CloudKit 연동)를 지원할지 결정이 필요하다 — 지원한다면 엔티티 설계(옵셔널 관계, 기본값 등)에 제약이 추가된다.
-- **테스트 전략**: [testing-strategy.md](./testing-strategy.md)에 계획을 정리했다. 실행(계산 로직 추출, 실제 테스트 작성)은 아직 남아있다.
