@@ -13,6 +13,17 @@ struct moovApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            WorkoutSession.self,
+            WorkoutPart.self,
+            ExerciseBlock.self,
+            WorkoutResult.self,
+            Exercise.self,
+            Tag.self,
+            PersonalRecord.self,
+            ConditionNote.self,
+            WorkoutTemplate.self,
+            TemplatePart.self,
+            TemplateBlock.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

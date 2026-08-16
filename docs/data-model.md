@@ -7,6 +7,7 @@
 1. **세션은 여러 개의 수행 단위(Part)로 구성된다.** 웜업 하나, 본운동 하나, 보조운동 하나라는 고정 개수/순서를 가정하지 않는다. 실제 일지에서도 "Session A(Strength) → Session B(For Time) → Accessory(EMOM)"처럼 포맷과 결과가 다른 본운동이 한 세션에 여러 번 등장한다. 이를 위해 포맷과 결과는 세션이 아니라 **`WorkoutPart` 단위**로 귀속시킨다.
 2. **웜업/본운동/보조운동 여부는 고정 슬롯이 아니라 태그다.** 하나의 블록이 여러 태그를 가질 수 있고(예: "본운동" + "컨디셔닝"), 태그 종류와 개수에 제약이 없다.
 3. **종목명과 태그는 자유 텍스트가 아니라 카탈로그(`Exercise`, `Tag`) 참조다.** 표기 차이(대소문자, 띄어쓰기 등)로 인한 히스토리 조회 누락을 막고, 사용자가 프리셋에 없는 항목을 직접 추가할 수 있게 한다.
+4. **종목 삭제는 참조만 끊고, 이름은 스냅샷으로 보존한다.** `Exercise`를 삭제해도 `exercise` 참조만 nil이 되고(`ExerciseBlock`/`PersonalRecord`/`TemplateBlock`에 저장된 `exerciseName` 스냅샷 덕분에) 과거 기록의 종목명은 그대로 유지된다. 태그는 이 정책을 적용하지 않는다 — 태그 삭제 시 이름 보존 없이 블록에서 태그만 제거된다(FR-12).
 
 ## ER 다이어그램
 
@@ -16,12 +17,12 @@ erDiagram
     WorkoutSession ||--o{ ConditionNote : "conditionNotes"
     WorkoutPart ||--o{ ExerciseBlock : "blocks"
     WorkoutPart |o--o| WorkoutResult : "result"
-    ExerciseBlock }o--|| Exercise : "exercise"
+    ExerciseBlock }o--o| Exercise : "exercise"
     ExerciseBlock }o--o{ Tag : "tags"
-    PersonalRecord }o--|| Exercise : "exercise"
+    PersonalRecord }o--o| Exercise : "exercise"
     WorkoutTemplate ||--o{ TemplatePart : "templateParts"
     TemplatePart ||--o{ TemplateBlock : "blocks"
-    TemplateBlock }o--|| Exercise : "exercise"
+    TemplateBlock }o--o| Exercise : "exercise"
     TemplateBlock }o--o{ Tag : "tags"
 ```
 
@@ -62,7 +63,8 @@ erDiagram
 |---|---|---|
 | id | UUID | 식별자 |
 | order | Int | Part 내 순서 |
-| exercise | Exercise | 종목 카탈로그 참조 |
+| exercise | Exercise? | 종목 카탈로그 참조 (삭제 시 nil) |
+| exerciseName | String | 기록 시점 종목명 스냅샷 (exercise가 삭제/개명돼도 유지) |
 | weight | Double? | 무게 |
 | weightUnit | WeightUnit? | lb/kg |
 | reps | Int? | 반복수 |
@@ -96,7 +98,7 @@ Part의 수행 결과. 포맷에 따라 사용하는 필드가 다르다. FR-04.
 | category | String? | 카테고리(선택, 예: 웨이트리프팅/체조/컨디셔닝) |
 | defaultWeightUnit | WeightUnit? | 기본 무게 단위(선택) |
 
-> 종목을 삭제해도 이미 기록된 `ExerciseBlock`은 종목명 스냅샷을 유지해 과거 기록이 깨지지 않아야 한다(구현 시 소프트 삭제 또는 이름 스냅샷 방식 결정 필요).
+> 종목을 삭제하면 `exercise` 참조만 nil로 끊어지고, `ExerciseBlock`/`PersonalRecord`/`TemplateBlock`에 저장된 `exerciseName` 스냅샷으로 과거 기록의 종목명이 그대로 유지된다. 삭제 UI에서는 "이미 N개 기록에 사용 중입니다" 같은 확인 안내를 표시한다(FR-11).
 
 ### Tag
 
@@ -117,7 +119,8 @@ Part의 수행 결과. 포맷에 따라 사용하는 필드가 다르다. FR-04.
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | id | UUID | 식별자 |
-| exercise | Exercise | 종목 카탈로그 참조 |
+| exercise | Exercise? | 종목 카탈로그 참조 (삭제 시 nil) |
+| exerciseName | String | 기록 시점 종목명 스냅샷 |
 | weight | Double | 기록 중량 |
 | weightUnit | WeightUnit | lb/kg |
 | date | Date | 기록 날짜 |
@@ -147,7 +150,8 @@ Part의 수행 결과. 포맷에 따라 사용하는 필드가 다르다. FR-04.
 | TemplatePart | order | Int | 순서 |
 | TemplatePart | format | WorkoutFormat | 기본 포맷 |
 | TemplatePart | blocks | [TemplateBlock] | 순서가 있는 블록 구성 |
-| TemplateBlock | exercise | Exercise | 종목 카탈로그 참조 |
+| TemplateBlock | exercise | Exercise? | 종목 카탈로그 참조 (삭제 시 nil) |
+| TemplateBlock | exerciseName | String | 기록 시점 종목명 스냅샷 |
 | TemplateBlock | weight/weightUnit/reps/sets/restSeconds | - | `ExerciseBlock`과 동일 필드 |
 | TemplateBlock | tags | [Tag] | 다중 태그 |
 
@@ -188,7 +192,3 @@ enum ResultKind {
 | FR-11, UC-07 | Exercise |
 | FR-12, UC-08 | Tag |
 | FR-13 | ExerciseBlock.tags, Tag |
-
-## 미해결 사항
-
-- **Exercise/Tag 삭제 정책**: 이미 기록에 사용된 종목/태그를 삭제할 때, 과거 `ExerciseBlock`이 이름 스냅샷을 갖게 할지(카탈로그와 완전히 분리) 아니면 참조만 끊고 표시용 이름을 별도 보관할지 결정 필요.
