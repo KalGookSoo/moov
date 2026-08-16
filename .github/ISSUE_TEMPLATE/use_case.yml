@@ -1,0 +1,78 @@
+name: 유즈케이스
+description: moov 앱의 유즈케이스(사용자 시나리오)를 명세하여 등록하세요.
+title: "[UC-] "
+labels: [use-case]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        운동 프로그램/일지 앱 moov의 유즈케이스를 액터-전제조건-트리거-흐름-사후조건 구조로 작성합니다.
+        `docs/use-cases.md`에 정리된 유즈케이스를 기반으로 등록해 주세요.
+  - type: input
+    id: actor
+    attributes:
+      label: 액터
+      description: 이 유즈케이스를 수행하는 주체
+      placeholder: 예) 사용자
+    validations:
+      required: true
+  - type: textarea
+    id: precondition
+    attributes:
+      label: 전제 조건
+      description: 유즈케이스 시작 전에 만족되어야 하는 상태
+      placeholder: 예) 하나 이상의 세션이 기록되어 있다.
+    validations:
+      required: true
+  - type: textarea
+    id: trigger
+    attributes:
+      label: 트리거
+      description: 유즈케이스를 시작시키는 사용자 행동
+      placeholder: 예) 사용자가 세션 목록 화면에 진입한다.
+    validations:
+      required: true
+  - type: textarea
+    id: main_flow
+    attributes:
+      label: 기본 흐름
+      description: 정상적인 경우의 단계별 흐름
+      placeholder: |
+        1) ...
+        2) ...
+        3) ...
+    validations:
+      required: true
+  - type: textarea
+    id: alt_flow
+    attributes:
+      label: 예외/대안 흐름
+      description: 정상 흐름을 벗어나는 경우와 처리 방법
+      placeholder: 예) 필수 항목 누락 시 저장이 차단되고 안내 메시지가 표시된다.
+    validations:
+      required: false
+  - type: textarea
+    id: postcondition
+    attributes:
+      label: 사후 조건
+      description: 유즈케이스 완료 후 보장되는 상태
+    validations:
+      required: false
+  - type: textarea
+    id: related_fr
+    attributes:
+      label: 연관 기능 요구사항
+      description: 관련된 FR 이슈 번호나 링크
+      placeholder: 예) FR-01, FR-02
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 체크리스트
+      options:
+        - label: 중복 유즈케이스를 검색했습니다
+          required: true
+        - label: docs/use-cases.md 내용과 일치합니다
+          required: true
