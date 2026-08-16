@@ -51,3 +51,4 @@ iOSInjectionProject/
 
 # macOS
 .DS_Store
+/moov.xcodeproj/project.xcworkspace/xcuserdata/
