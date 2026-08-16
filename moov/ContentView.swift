@@ -17,7 +17,7 @@ struct ContentView: View {
                     Label("세션", systemImage: "figure.strengthtraining.traditional")
                 }
 
-            HistoryPlaceholderView()
+            HistoryView()
                 .tabItem {
                     Label("히스토리", systemImage: "chart.line.uptrend.xyaxis")
                 }
