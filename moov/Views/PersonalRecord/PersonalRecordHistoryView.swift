@@ -19,17 +19,8 @@ struct PersonalRecordHistoryView: View {
         _records = Query(filter: #Predicate<PersonalRecord> { $0.exerciseName == exerciseName })
     }
 
-    /// 오래된 순으로 정렬하고, 각 시점까지의 누적 최댓값을 기준으로 "갱신" 여부를 표시한다.
     private var timeline: [PRTimelineEntry] {
-        let ascending = records.sorted { $0.date < $1.date }
-        var runningBest = -Double.infinity
-        var entries: [PRTimelineEntry] = []
-        for record in ascending {
-            let isRecordBreaking = record.weight > runningBest
-            if isRecordBreaking { runningBest = record.weight }
-            entries.append(PRTimelineEntry(record: record, isRecordBreaking: isRecordBreaking))
-        }
-        return entries
+        PRTimelineCalculator.makeTimeline(from: records)
     }
 
     private var displayEntries: [PRTimelineEntry] {
@@ -74,12 +65,6 @@ struct PersonalRecordHistoryView: View {
             modelContext.delete(entries[index].record)
         }
     }
-}
-
-private struct PRTimelineEntry: Identifiable {
-    let record: PersonalRecord
-    let isRecordBreaking: Bool
-    var id: UUID { record.id }
 }
 
 private struct PRTrendChart: View {

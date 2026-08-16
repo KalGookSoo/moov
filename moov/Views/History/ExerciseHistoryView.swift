@@ -20,12 +20,7 @@ struct ExerciseHistoryView: View {
     }
 
     private var entries: [(date: Date, block: ExerciseBlock)] {
-        blocks
-            .compactMap { block in
-                guard let date = block.part?.session?.date else { return nil }
-                return (date, block)
-            }
-            .sorted { $0.date < $1.date }
+        ExerciseHistoryCalculator.makeEntries(from: blocks)
     }
 
     private var weightPointCount: Int {

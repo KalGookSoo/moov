@@ -13,32 +13,11 @@ struct TagAggregateView: View {
     @Query private var allBlocks: [ExerciseBlock]
 
     private var entries: [(date: Date, block: ExerciseBlock)] {
-        allBlocks
-            .compactMap { block in
-                guard block.tags.contains(where: { $0.id == tag.id }),
-                      let date = block.part?.session?.date else { return nil }
-                return (date, block)
-            }
-            .sorted { $0.date < $1.date }
+        TagWeeklyAggregator.matchingEntries(blocks: allBlocks, tag: tag)
     }
 
     private var weeklyBuckets: [WeeklyBucket] {
-        let calendar = Calendar.current
-        var buckets: [Date: (volume: Int, frequency: Int)] = [:]
-
-        for entry in entries {
-            let weekStart = calendar.dateInterval(of: .weekOfYear, for: entry.date)?.start ?? entry.date
-            let reps = entry.block.reps ?? 0
-            let sets = entry.block.sets ?? 1
-            var bucket = buckets[weekStart] ?? (volume: 0, frequency: 0)
-            bucket.volume += reps * sets
-            bucket.frequency += 1
-            buckets[weekStart] = bucket
-        }
-
-        return buckets
-            .map { WeeklyBucket(weekStart: $0.key, volume: $0.value.volume, frequency: $0.value.frequency) }
-            .sorted { $0.weekStart < $1.weekStart }
+        TagWeeklyAggregator.aggregate(blocks: allBlocks, tag: tag)
     }
 
     var body: some View {
@@ -75,14 +54,6 @@ struct TagAggregateView: View {
         }
         .navigationTitle(tag.name)
     }
-}
-
-private struct WeeklyBucket: Identifiable {
-    let weekStart: Date
-    let volume: Int
-    let frequency: Int
-
-    var id: Date { weekStart }
 }
 
 private struct VolumeTrendChart: View {
