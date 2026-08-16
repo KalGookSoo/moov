@@ -21,7 +21,7 @@ struct TemplateBlockFormView: View {
     @State private var weight: Double?
     @State private var weightUnit: WeightUnit = .lb
     @State private var reps: Int?
-    @State private var sets: Int?
+    @State private var sets: Int? = 1
     @State private var restSeconds: Int?
     @State private var selectedTags: Set<Tag> = []
 
