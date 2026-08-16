@@ -64,6 +64,12 @@ flowchart LR
     VM -->|"ModelContext"| Model
 ```
 
-## 미해결 사항
+## 결정 사항
 
-- **iCloud 동기화 여부**: 현재 `moovApp.swift`는 로컬 전용 `ModelConfiguration`을 사용한다. 기기 간 동기화(CloudKit 연동)를 지원할지 결정이 필요하다 — 지원한다면 엔티티 설계(옵셔널 관계, 기본값 등)에 제약이 추가된다.
+- **iCloud 동기화: 로컬 전용 유지**. `moovApp.swift`는 로컬 전용 `ModelConfiguration`을 사용한다. CloudKit 연동을 실제로 시도해본 결과, 다음 조건이 모두 필요하다는 것을 확인했다:
+  - 모든 비옵셔널 스칼라 프로퍼티에 기본값 필요 (`var id: UUID = UUID()` 등)
+  - **모든 to-many 관계 배열이 옵셔널 타입이어야 함** (`[WorkoutPart]`가 아니라 `[WorkoutPart]?`) — 이 요구사항은 `session.parts.append(...)`처럼 배열에 직접 접근하는 앱 전역의 모든 View 코드 수정을 요구해 파급 범위가 매우 크다
+  - `ExerciseBlock.tags`/`TemplateBlock.tags`처럼 인버스가 없는 다대다 관계는 `Tag` 쪽에 명시적 인버스 컬렉션 추가 필요
+  - 실제 동기화 활성화는 사용자의 Apple Developer 팀 계정으로 Xcode에서 iCloud + CloudKit capability를 직접 추가해야 함(에이전트가 대신 할 수 없음)
+
+  파급 범위(전체 모델 + 거의 모든 View 파일) 대비 지금 시점에 얻는 이득이 크지 않다고 판단해 로컬 전용을 유지하기로 했다. 이후 다시 검토할 경우 위 네 가지가 실제 변경 범위다.
