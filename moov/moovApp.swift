@@ -12,7 +12,6 @@ import SwiftData
 struct moovApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
             WorkoutSession.self,
             WorkoutPart.self,
             ExerciseBlock.self,
@@ -28,7 +27,9 @@ struct moovApp: App {
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            seedDefaultTagsIfNeeded(in: container)
+            return container
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
@@ -40,4 +41,17 @@ struct moovApp: App {
         }
         .modelContainer(sharedModelContainer)
     }
+}
+
+/// 앱 최초 실행 시 웜업/본운동/보조운동 등 프리셋 태그를 시딩한다. docs/data-model.md 참고.
+@MainActor
+private func seedDefaultTagsIfNeeded(in container: ModelContainer) {
+    let context = container.mainContext
+    let existingCount = (try? context.fetchCount(FetchDescriptor<Tag>())) ?? 0
+    guard existingCount == 0 else { return }
+
+    for name in ["웜업", "본운동", "보조운동", "컨디셔닝", "스킬"] {
+        context.insert(Tag(name: name))
+    }
+    try? context.save()
 }
