@@ -14,6 +14,9 @@ struct SessionFormView: View {
     @Bindable private var session: WorkoutSession
     private let isNew: Bool
 
+    @State private var isAddingConditionNote = false
+    @State private var conditionNoteToEdit: ConditionNote?
+
     init(session: WorkoutSession?) {
         let resolved = session ?? WorkoutSession(date: .now)
         _session = Bindable(wrappedValue: resolved)
@@ -57,6 +60,34 @@ struct SessionFormView: View {
                 Text("파트")
             }
 
+            Section("컨디션 메모") {
+                if session.conditionNotes.isEmpty {
+                    ContentUnavailableView {
+                        Label("컨디션 메모가 없어요", systemImage: "heart.text.square")
+                    } description: {
+                        Text("통증이나 컨디션이 있다면 메모로 남겨보세요.")
+                    } actions: {
+                        Button("메모 추가") { isAddingConditionNote = true }
+                    }
+                } else {
+                    ForEach(session.conditionNotes) { note in
+                        Button {
+                            conditionNoteToEdit = note
+                        } label: {
+                            ConditionNoteRow(note: note)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .onDelete(perform: deleteConditionNotes)
+
+                    Button {
+                        isAddingConditionNote = true
+                    } label: {
+                        Label("메모 추가", systemImage: "plus")
+                    }
+                }
+            }
+
             Section("노트") {
                 TextField("메모 (선택)", text: notesBinding, axis: .vertical)
                     .lineLimit(3...6)
@@ -75,6 +106,16 @@ struct SessionFormView: View {
         .onAppear {
             if isNew {
                 modelContext.insert(session)
+            }
+        }
+        .sheet(isPresented: $isAddingConditionNote) {
+            NavigationStack {
+                ConditionNoteFormView(note: nil, session: session)
+            }
+        }
+        .sheet(item: $conditionNoteToEdit) { note in
+            NavigationStack {
+                ConditionNoteFormView(note: note, session: nil)
             }
         }
     }
@@ -109,6 +150,12 @@ struct SessionFormView: View {
         }
         dismiss()
     }
+
+    private func deleteConditionNotes(at offsets: IndexSet) {
+        for index in offsets {
+            modelContext.delete(session.conditionNotes[index])
+        }
+    }
 }
 
 private struct PartRow: View {
@@ -132,6 +179,31 @@ private struct PartRow: View {
             pieces.append("결과 입력됨")
         }
         return pieces.joined(separator: " · ")
+    }
+}
+
+private struct ConditionNoteRow: View {
+    let note: ConditionNote
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                if let bodyPart = note.bodyPart {
+                    Text(bodyPart)
+                        .font(.headline)
+                }
+                if let painLevel = note.painLevel {
+                    Text("강도 \(painLevel)/10")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Text(note.memo)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+        }
+        .padding(.vertical, 2)
     }
 }
 
