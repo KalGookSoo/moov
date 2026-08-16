@@ -16,6 +16,7 @@ struct SessionFormView: View {
 
     @State private var isAddingConditionNote = false
     @State private var conditionNoteToEdit: ConditionNote?
+    @State private var isPickingTemplate = false
 
     init(session: WorkoutSession?) {
         let resolved = session ?? WorkoutSession(date: .now)
@@ -39,6 +40,7 @@ struct SessionFormView: View {
                     } actions: {
                         Button("파트 추가") { addPart() }
                             .buttonStyle(.borderedProminent)
+                        Button("템플릿 불러오기") { isPickingTemplate = true }
                     }
                 } else {
                     ForEach(sortedParts) { part in
@@ -54,6 +56,12 @@ struct SessionFormView: View {
                         addPart()
                     } label: {
                         Label("파트 추가", systemImage: "plus")
+                    }
+
+                    Button {
+                        isPickingTemplate = true
+                    } label: {
+                        Label("템플릿 불러오기", systemImage: "doc.on.doc")
                     }
                 }
             } header: {
@@ -118,6 +126,13 @@ struct SessionFormView: View {
                 ConditionNoteFormView(note: note, session: nil)
             }
         }
+        .sheet(isPresented: $isPickingTemplate) {
+            NavigationStack {
+                TemplatePickerView { template in
+                    applyTemplate(template)
+                }
+            }
+        }
     }
 
     private var sortedParts: [WorkoutPart] {
@@ -154,6 +169,37 @@ struct SessionFormView: View {
     private func deleteConditionNotes(at offsets: IndexSet) {
         for index in offsets {
             modelContext.delete(session.conditionNotes[index])
+        }
+    }
+
+    /// 템플릿의 파트/블록 구성을 복사해 세션에 채운다. TemplatePart → WorkoutPart,
+    /// TemplateBlock → ExerciseBlock으로 복사되며, 이후 자유롭게 수정할 수 있다. UC-06, FR-09.
+    private func applyTemplate(_ template: WorkoutTemplate) {
+        let baseOrder = session.parts.count
+        let templateParts = template.templateParts.sorted { $0.order < $1.order }
+
+        for (offset, templatePart) in templateParts.enumerated() {
+            let newPart = WorkoutPart(order: baseOrder + offset, format: templatePart.format)
+            modelContext.insert(newPart)
+            session.parts.append(newPart)
+
+            let templateBlocks = templatePart.blocks.sorted { $0.order < $1.order }
+            for templateBlock in templateBlocks {
+                // 템플릿 저장 당시 참조하던 종목이 카탈로그에서 삭제된 경우, 해당 블록은 건너뛴다.
+                guard let exercise = templateBlock.exercise else { continue }
+                let newBlock = ExerciseBlock(
+                    order: newPart.blocks.count,
+                    exercise: exercise,
+                    weight: templateBlock.weight,
+                    weightUnit: templateBlock.weightUnit,
+                    reps: templateBlock.reps,
+                    sets: templateBlock.sets,
+                    restSeconds: templateBlock.restSeconds,
+                    tags: templateBlock.tags
+                )
+                modelContext.insert(newBlock)
+                newPart.blocks.append(newBlock)
+            }
         }
     }
 }

@@ -15,7 +15,7 @@ struct ManageView: View {
         NavigationStack {
             List {
                 NavigationLink {
-                    TemplatePlaceholderView()
+                    TemplateListView()
                 } label: {
                     Label("템플릿", systemImage: "doc.on.doc")
                 }
