@@ -44,6 +44,12 @@ struct ManageView: View {
                     } label: {
                         Label("업데이트 노트", systemImage: "sparkles")
                     }
+
+                    NavigationLink {
+                        VersionInfoView()
+                    } label: {
+                        Label("버전 정보", systemImage: "info.circle")
+                    }
                 }
             }
             .navigationTitle("관리")
