@@ -11,7 +11,6 @@ struct PersonalRecordFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @Query(sort: \Exercise.name) private var exercises: [Exercise]
     @Query private var allRecords: [PersonalRecord]
 
     @State private var selectedExercise: Exercise?
@@ -19,31 +18,12 @@ struct PersonalRecordFormView: View {
     @State private var weightUnit: WeightUnit = .lb
     @State private var date: Date = .now
 
-    @State private var isAddingExercise = false
-    @State private var newExerciseName = ""
     @State private var showLowerThanBestConfirmation = false
 
     var body: some View {
         Form {
             Section("종목") {
-                if exercises.isEmpty {
-                    ContentUnavailableView {
-                        Label("등록된 종목이 없어요", systemImage: "figure.run")
-                    } description: {
-                        Text("PR을 등록할 종목을 먼저 추가해주세요.")
-                    } actions: {
-                        Button("종목 추가") { isAddingExercise = true }
-                            .buttonStyle(.borderedProminent)
-                    }
-                } else {
-                    Picker("종목", selection: $selectedExercise) {
-                        Text("선택 안 함").tag(Exercise?.none)
-                        ForEach(exercises) { exercise in
-                            Text(exercise.name).tag(Optional(exercise))
-                        }
-                    }
-                    Button("새 종목 추가") { isAddingExercise = true }
-                }
+                ExercisePickerField(selection: $selectedExercise)
             }
 
             Section("중량") {
@@ -83,11 +63,6 @@ struct PersonalRecordFormView: View {
                     .disabled(selectedExercise == nil || weight == nil)
             }
         }
-        .alert("새 종목 추가", isPresented: $isAddingExercise) {
-            TextField("종목명", text: $newExerciseName)
-            Button("추가") { addExercise() }
-            Button("취소", role: .cancel) { newExerciseName = "" }
-        }
         .confirmationDialog(
             "기존 PR보다 낮은 값이에요",
             isPresented: $showLowerThanBestConfirmation,
@@ -119,15 +94,6 @@ struct PersonalRecordFormView: View {
         } else {
             save()
         }
-    }
-
-    private func addExercise() {
-        let trimmed = newExerciseName.trimmingCharacters(in: .whitespacesAndNewlines)
-        newExerciseName = ""
-        guard !trimmed.isEmpty else { return }
-        let exercise = Exercise(name: trimmed)
-        modelContext.insert(exercise)
-        selectedExercise = exercise
     }
 
     private func save() {

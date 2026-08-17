@@ -14,9 +14,6 @@ struct TemplateBlockFormView: View {
     let block: TemplateBlock?
     let part: TemplatePart?
 
-    @Query(sort: \Exercise.name) private var exercises: [Exercise]
-    @Query(sort: \Tag.name) private var allTags: [Tag]
-
     @State private var selectedExercise: Exercise?
     @State private var weight: Double?
     @State private var weightUnit: WeightUnit = .lb
@@ -25,34 +22,12 @@ struct TemplateBlockFormView: View {
     @State private var restSeconds: Int?
     @State private var selectedTags: Set<Tag> = []
 
-    @State private var isAddingExercise = false
-    @State private var newExerciseName = ""
-    @State private var isAddingTag = false
-    @State private var newTagName = ""
-
     private var isNew: Bool { block == nil }
 
     var body: some View {
         Form {
             Section("종목") {
-                if exercises.isEmpty {
-                    ContentUnavailableView {
-                        Label("등록된 종목이 없어요", systemImage: "figure.run")
-                    } description: {
-                        Text("사용할 운동 종목을 먼저 추가해주세요.")
-                    } actions: {
-                        Button("종목 추가") { isAddingExercise = true }
-                            .buttonStyle(.borderedProminent)
-                    }
-                } else {
-                    Picker("종목", selection: $selectedExercise) {
-                        Text("선택 안 함").tag(Exercise?.none)
-                        ForEach(exercises) { exercise in
-                            Text(exercise.name).tag(Optional(exercise))
-                        }
-                    }
-                    Button("새 종목 추가") { isAddingExercise = true }
-                }
+                ExercisePickerField(selection: $selectedExercise)
             }
 
             Section("무게 / 반복") {
@@ -76,21 +51,7 @@ struct TemplateBlockFormView: View {
             }
 
             Section("태그") {
-                if allTags.isEmpty {
-                    ContentUnavailableView {
-                        Label("태그가 없어요", systemImage: "tag")
-                    } description: {
-                        Text("웜업/본운동/보조운동처럼 이 블록을 구분할 태그를 추가해보세요.")
-                    } actions: {
-                        Button("태그 추가") { isAddingTag = true }
-                            .buttonStyle(.borderedProminent)
-                    }
-                } else {
-                    ForEach(allTags) { tag in
-                        Toggle(tag.name, isOn: tagBinding(tag))
-                    }
-                    Button("새 태그 추가") { isAddingTag = true }
-                }
+                TagPickerField(selection: $selectedTags)
             }
         }
         .navigationTitle(isNew ? "블록 추가" : "블록 수정")
@@ -105,18 +66,6 @@ struct TemplateBlockFormView: View {
             }
         }
         .onAppear { loadExistingValues() }
-        .alert("새 종목 추가", isPresented: $isAddingExercise) {
-            TextField("종목명", text: $newExerciseName)
-            Button("추가") { addExercise() }
-            Button("취소", role: .cancel) { newExerciseName = "" }
-        } message: {
-            Text("카테고리나 기본 무게 단위는 나중에 추가할 수 있어요.")
-        }
-        .alert("새 태그 추가", isPresented: $isAddingTag) {
-            TextField("태그명", text: $newTagName)
-            Button("추가") { addTag() }
-            Button("취소", role: .cancel) { newTagName = "" }
-        }
     }
 
     private func loadExistingValues() {
@@ -128,37 +77,6 @@ struct TemplateBlockFormView: View {
         sets = block.sets
         restSeconds = block.restSeconds
         selectedTags = Set(block.tags)
-    }
-
-    private func tagBinding(_ tag: Tag) -> Binding<Bool> {
-        Binding(
-            get: { selectedTags.contains(tag) },
-            set: { isOn in
-                if isOn {
-                    selectedTags.insert(tag)
-                } else {
-                    selectedTags.remove(tag)
-                }
-            }
-        )
-    }
-
-    private func addExercise() {
-        let trimmed = newExerciseName.trimmingCharacters(in: .whitespacesAndNewlines)
-        newExerciseName = ""
-        guard !trimmed.isEmpty else { return }
-        let exercise = Exercise(name: trimmed)
-        modelContext.insert(exercise)
-        selectedExercise = exercise
-    }
-
-    private func addTag() {
-        let trimmed = newTagName.trimmingCharacters(in: .whitespacesAndNewlines)
-        newTagName = ""
-        guard !trimmed.isEmpty else { return }
-        let tag = Tag(name: trimmed)
-        modelContext.insert(tag)
-        selectedTags.insert(tag)
     }
 
     private func save() {
