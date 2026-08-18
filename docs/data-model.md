@@ -218,3 +218,4 @@ enum ResultKind {
 | FR-13 | ExerciseBlock.tags, Tag |
 | FR-20 | BlockGroup, TemplateBlockGroup |
 | FR-21 | ExerciseBlock.repsUnit, TemplateBlock.repsUnit |
+| FR-22 | WorkoutSession, WorkoutPart, BlockGroup, ExerciseBlock, Exercise, Tag |

@@ -5,11 +5,17 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 /// "관리" 탭 — 템플릿/종목 카탈로그/태그 카탈로그 진입점. docs/information-architecture.md.
 struct ManageView: View {
+    @Environment(\.modelContext) private var modelContext
+
     @State private var isShowingOnboarding = false
     @State private var isShowingReleaseNotes = false
+    @State private var isImportingWorkouts = false
+    @State private var importResultMessage: String?
+    @State private var importErrorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -30,6 +36,14 @@ struct ManageView: View {
                     TagCatalogView()
                 } label: {
                     Label("태그 카탈로그", systemImage: "tag")
+                }
+
+                Section("가져오기") {
+                    Button {
+                        isImportingWorkouts = true
+                    } label: {
+                        Label("운동 기록 가져오기", systemImage: "square.and.arrow.down")
+                    }
                 }
 
                 Section("도움말") {
@@ -67,6 +81,55 @@ struct ManageView: View {
             ) {
                 isShowingReleaseNotes = false
             }
+        }
+        .fileImporter(isPresented: $isImportingWorkouts, allowedContentTypes: [.json]) { result in
+            switch result {
+            case .success(let url):
+                importWorkouts(from: url)
+            case .failure(let error):
+                importErrorMessage = error.localizedDescription
+            }
+        }
+        .alert("가져오기 완료", isPresented: importSuccessBinding) {
+            Button("확인") {}
+        } message: {
+            Text(importResultMessage ?? "")
+        }
+        .alert("가져오기 실패", isPresented: importErrorBinding) {
+            Button("확인") {}
+        } message: {
+            Text(importErrorMessage ?? "")
+        }
+    }
+
+    private var importSuccessBinding: Binding<Bool> {
+        Binding(
+            get: { importResultMessage != nil },
+            set: { if !$0 { importResultMessage = nil } }
+        )
+    }
+
+    private var importErrorBinding: Binding<Bool> {
+        Binding(
+            get: { importErrorMessage != nil },
+            set: { if !$0 { importErrorMessage = nil } }
+        )
+    }
+
+    private func importWorkouts(from url: URL) {
+        guard url.startAccessingSecurityScopedResource() else {
+            importErrorMessage = "파일에 접근할 수 없습니다."
+            return
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let payload = try JSONDecoder().decode(WorkoutImportPayload.self, from: data)
+            let count = try WorkoutImporter.apply(payload, using: modelContext)
+            importResultMessage = "\(count)개 세션을 가져왔습니다."
+        } catch {
+            importErrorMessage = error.localizedDescription
         }
     }
 }
