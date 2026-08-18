@@ -16,6 +16,9 @@ struct ManageView: View {
     @State private var isImportingWorkouts = false
     @State private var importResultMessage: String?
     @State private var importErrorMessage: String?
+    @State private var isPresentingExportSheet = false
+    @State private var exportFileURL: URL?
+    @State private var exportErrorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -36,6 +39,14 @@ struct ManageView: View {
                     TagCatalogView()
                 } label: {
                     Label("태그 카탈로그", systemImage: "tag")
+                }
+
+                Section("내보내기") {
+                    Button {
+                        exportWorkouts()
+                    } label: {
+                        Label("데이터 내보내기", systemImage: "square.and.arrow.up")
+                    }
                 }
 
                 Section("가져오기") {
@@ -100,6 +111,16 @@ struct ManageView: View {
         } message: {
             Text(importErrorMessage ?? "")
         }
+        .sheet(isPresented: $isPresentingExportSheet) {
+            if let exportFileURL {
+                ActivityShareSheet(items: [exportFileURL])
+            }
+        }
+        .alert("내보내기 실패", isPresented: exportErrorBinding) {
+            Button("확인") {}
+        } message: {
+            Text(exportErrorMessage ?? "")
+        }
     }
 
     private var importSuccessBinding: Binding<Bool> {
@@ -114,6 +135,28 @@ struct ManageView: View {
             get: { importErrorMessage != nil },
             set: { if !$0 { importErrorMessage = nil } }
         )
+    }
+
+    private var exportErrorBinding: Binding<Bool> {
+        Binding(
+            get: { exportErrorMessage != nil },
+            set: { if !$0 { exportErrorMessage = nil } }
+        )
+    }
+
+    private func exportWorkouts() {
+        do {
+            let data = try BackupExporter.makeBackupData(using: modelContext)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd-HHmmss"
+            let filename = "moov-backup-\(formatter.string(from: .now)).json"
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+            try data.write(to: url, options: .atomic)
+            exportFileURL = url
+            isPresentingExportSheet = true
+        } catch {
+            exportErrorMessage = error.localizedDescription
+        }
     }
 
     private func importWorkouts(from url: URL) {

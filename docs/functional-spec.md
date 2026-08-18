@@ -201,11 +201,12 @@
 
 - **개요**: 사용자의 전체 운동 기록 데이터를 파일로 내보낸다.
 - **상세 요구사항**:
-  - 세션/파트/블록/결과/종목/태그/PR/컨디션 메모/템플릿 전체를 이식 가능한 포맷(JSON 등)으로 직렬화한다.
-  - 시스템 공유 시트(예: UIActivityViewController 계열)로 저장/전송할 수 있게 한다.
+  - 세션/파트/그룹/블록/결과/종목/태그/PR/컨디션 메모/템플릿 전체를 ID 기반 JSON으로 직렬화한다. 포맷 상세는 [docs/backup-format.md](./backup-format.md) 참고.
+  - 시스템 공유 시트(`UIActivityViewController`)로 저장/전송할 수 있게 한다.
   - 관리 탭에 진입점을 제공한다.
 - **수용 기준**:
   - Given 데이터가 존재하는 상태에서, When "데이터 내보내기"를 실행하면, Then 내보내기 파일이 생성되고 공유 시트가 표시된다.
+  - Given 데이터가 하나도 없는 상태에서, When "데이터 내보내기"를 실행하면, Then 빈 배열로 구성된 유효한 백업 파일이 생성된다.
 - **연관 데이터 모델**: 전체 엔티티 (`WorkoutSession`, `WorkoutPart`, `BlockGroup`, `ExerciseBlock`, `WorkoutResult`, `Exercise`, `Tag`, `PersonalRecord`, `ConditionNote`, `WorkoutTemplate`, `TemplatePart`, `TemplateBlockGroup`, `TemplateBlock`)
 - **연관 유즈케이스**: UC-11
 
