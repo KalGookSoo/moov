@@ -99,7 +99,7 @@ private struct HistoryRow: View {
         if let weight = block.weight {
             pieces.append("\(weight.formatted())\(block.weightUnit?.displayName ?? "")")
         }
-        if let reps = block.reps { pieces.append("\(reps)회") }
+        if let reps = block.reps { pieces.append("\(reps)\(block.repsUnit?.displayName ?? RepsUnit.count.displayName)") }
         if let group = block.group {
             if group.blocks.count > 1 {
                 pieces.append("\(group.rounds)라운드")

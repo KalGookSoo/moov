@@ -34,6 +34,7 @@ enum TemplateApplier {
                         weight: templateBlock.weight,
                         weightUnit: templateBlock.weightUnit,
                         reps: templateBlock.reps,
+                        repsUnit: templateBlock.repsUnit,
                         restSeconds: templateBlock.restSeconds,
                         tags: templateBlock.tags
                     )

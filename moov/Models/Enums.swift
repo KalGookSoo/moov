@@ -38,6 +38,21 @@ enum WeightUnit: String, Codable, CaseIterable {
     }
 }
 
+/// 반복수(ExerciseBlock.reps)가 어떤 단위로 측정되는지. FR-21.
+enum RepsUnit: String, Codable, CaseIterable {
+    case count
+    case calorie
+    case meter
+
+    var displayName: String {
+        switch self {
+        case .count: "회"
+        case .calorie: "cal"
+        case .meter: "m"
+        }
+    }
+}
+
 /// WorkoutResult가 어떤 필드를 사용하는지 구분한다.
 enum ResultKind: String, Codable, CaseIterable {
     case time            // For Time / Interval

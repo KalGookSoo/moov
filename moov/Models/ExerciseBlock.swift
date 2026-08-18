@@ -18,6 +18,7 @@ final class ExerciseBlock {
     var weight: Double?
     var weightUnit: WeightUnit?
     var reps: Int?
+    var repsUnit: RepsUnit?
     var restSeconds: Int?
     @Relationship var tags: [Tag] = []
     var group: BlockGroup?
@@ -28,6 +29,7 @@ final class ExerciseBlock {
         weight: Double? = nil,
         weightUnit: WeightUnit? = nil,
         reps: Int? = nil,
+        repsUnit: RepsUnit? = nil,
         restSeconds: Int? = nil,
         tags: [Tag] = []
     ) {
@@ -38,6 +40,7 @@ final class ExerciseBlock {
         self.weight = weight
         self.weightUnit = weightUnit
         self.reps = reps
+        self.repsUnit = repsUnit
         self.restSeconds = restSeconds
         self.tags = tags
     }

@@ -188,7 +188,7 @@ private struct BlockRow: View {
             let unit = block.weightUnit?.displayName ?? ""
             pieces.append("\(weight.formatted())\(unit)")
         }
-        if let reps = block.reps { pieces.append("\(reps)회") }
+        if let reps = block.reps { pieces.append("\(reps)\(block.repsUnit?.displayName ?? RepsUnit.count.displayName)") }
         if !block.tags.isEmpty {
             pieces.append(block.tags.map(\.name).joined(separator: ", "))
         }

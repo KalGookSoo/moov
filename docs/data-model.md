@@ -84,6 +84,7 @@ erDiagram
 | weight | Double? | 무게 |
 | weightUnit | WeightUnit? | lb/kg |
 | reps | Int? | 반복수 |
+| repsUnit | RepsUnit? | 회/cal/m (FR-21) |
 | restSeconds | Int? | 휴식시간 |
 | tags | [Tag] | 다중 태그 (웜업/본운동/보조운동/컨디셔닝 등, 프리셋+사용자 정의) |
 
@@ -169,7 +170,7 @@ Part의 수행 결과. 포맷에 따라 사용하는 필드가 다르다. FR-04.
 | TemplateBlockGroup | blocks | [TemplateBlock] | 순서가 있는 블록 목록 |
 | TemplateBlock | exercise | Exercise? | 종목 카탈로그 참조 (삭제 시 nil) |
 | TemplateBlock | exerciseName | String | 기록 시점 종목명 스냅샷 |
-| TemplateBlock | weight/weightUnit/reps/restSeconds | - | `ExerciseBlock`과 동일 필드 |
+| TemplateBlock | weight/weightUnit/reps/repsUnit/restSeconds | - | `ExerciseBlock`과 동일 필드 |
 | TemplateBlock | tags | [Tag] | 다중 태그 |
 
 > 템플릿을 세션에 적용하면 `TemplatePart` → `WorkoutPart`(결과는 비워둔 채), `TemplateBlock` → `ExerciseBlock`으로 복사된다. 템플릿 삭제는 이미 복사되어 생성된 세션 데이터에 영향을 주지 않는다.
@@ -183,6 +184,12 @@ enum WorkoutFormat {
 
 enum WeightUnit {
     case lb, kg
+}
+
+enum RepsUnit {
+    case count    // 회
+    case calorie  // cal
+    case meter    // m
 }
 
 enum ResultKind {
@@ -210,3 +217,4 @@ enum ResultKind {
 | FR-12, UC-08 | Tag |
 | FR-13 | ExerciseBlock.tags, Tag |
 | FR-20 | BlockGroup, TemplateBlockGroup |
+| FR-21 | ExerciseBlock.repsUnit, TemplateBlock.repsUnit |

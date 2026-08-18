@@ -18,6 +18,7 @@ struct BlockFormView: View {
     @State private var weight: Double?
     @State private var weightUnit: WeightUnit = .lb
     @State private var reps: Int?
+    @State private var repsUnit: RepsUnit = .count
     @State private var restSeconds: Int?
     @State private var selectedTags: Set<Tag> = []
 
@@ -41,8 +42,17 @@ struct BlockFormView: View {
                     .pickerStyle(.segmented)
                     .frame(width: 120)
                 }
-                TextField("반복수", value: $reps, format: .number)
-                    .keyboardType(.numberPad)
+                HStack {
+                    TextField("반복수", value: $reps, format: .number)
+                        .keyboardType(.numberPad)
+                    Picker("단위", selection: $repsUnit) {
+                        ForEach(RepsUnit.allCases, id: \.self) { unit in
+                            Text(unit.displayName).tag(unit)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
+                }
                 TextField("휴식시간(초)", value: $restSeconds, format: .number)
                     .keyboardType(.numberPad)
             }
@@ -71,6 +81,7 @@ struct BlockFormView: View {
         weight = block.weight
         weightUnit = block.weightUnit ?? .lb
         reps = block.reps
+        repsUnit = block.repsUnit ?? .count
         restSeconds = block.restSeconds
         selectedTags = Set(block.tags)
     }
@@ -84,6 +95,7 @@ struct BlockFormView: View {
             block.weight = weight
             block.weightUnit = weightUnit
             block.reps = reps
+            block.repsUnit = repsUnit
             block.restSeconds = restSeconds
             block.tags = Array(selectedTags)
         } else if let group {
@@ -93,6 +105,7 @@ struct BlockFormView: View {
                 weight: weight,
                 weightUnit: weightUnit,
                 reps: reps,
+                repsUnit: repsUnit,
                 restSeconds: restSeconds,
                 tags: Array(selectedTags)
             )
