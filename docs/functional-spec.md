@@ -31,13 +31,14 @@
 
 - **개요**: 종목 단위 운동 블록을 추가/수정/삭제하고, 각 블록에 하나 이상의 태그(웜업/본운동/보조운동 등)를 부여한다.
 - **상세 요구사항**:
-  - 블록은 종목명, 무게, 무게 단위(lb/kg), 반복수, 세트수, 휴식시간(선택), 태그 목록을 갖는다.
-  - 한 파트에 여러 블록을 순서대로 추가할 수 있으며, 블록 순서와 태그는 서로 독립적이다(태그가 곧 순서를 의미하지 않는다).
+  - 블록은 종목명, 무게, 무게 단위(lb/kg), 반복수, 휴식시간(선택), 태그 목록을 갖는다.
+  - 블록은 그룹(`BlockGroup`)에 속하며, 몇 라운드 반복하는지는 블록이 아니라 그룹이 정한다(FR-20).
+  - 한 파트에 여러 그룹을, 그룹마다 여러 블록을 순서대로 추가할 수 있으며, 블록 순서와 태그는 서로 독립적이다(태그가 곧 순서를 의미하지 않는다).
   - 블록당 태그는 기본 제공 태그(웜업/본운동/보조운동 등)와 사용자 정의 태그(FR-12)를 함께 다중 선택할 수 있다.
 - **수용 기준**:
   - Given 블록 입력 화면에서, When 종목/무게/반복수를 입력하고 블록을 추가하면, Then 블록이 목록에 순서대로 표시된다.
   - Given 블록 입력 중, When "본운동"과 "컨디셔닝" 태그를 동시에 선택하면, Then 두 태그가 모두 블록에 저장된다.
-- **연관 데이터 모델**: `ExerciseBlock`, `Tag`
+- **연관 데이터 모델**: `ExerciseBlock`, `BlockGroup`, `Tag`
 - **연관 유즈케이스**: UC-01
 
 ## FR-04. 결과 입력
@@ -205,7 +206,7 @@
   - 관리 탭에 진입점을 제공한다.
 - **수용 기준**:
   - Given 데이터가 존재하는 상태에서, When "데이터 내보내기"를 실행하면, Then 내보내기 파일이 생성되고 공유 시트가 표시된다.
-- **연관 데이터 모델**: 전체 엔티티 (`WorkoutSession`, `WorkoutPart`, `ExerciseBlock`, `WorkoutResult`, `Exercise`, `Tag`, `PersonalRecord`, `ConditionNote`, `WorkoutTemplate`, `TemplatePart`, `TemplateBlock`)
+- **연관 데이터 모델**: 전체 엔티티 (`WorkoutSession`, `WorkoutPart`, `BlockGroup`, `ExerciseBlock`, `WorkoutResult`, `Exercise`, `Tag`, `PersonalRecord`, `ConditionNote`, `WorkoutTemplate`, `TemplatePart`, `TemplateBlockGroup`, `TemplateBlock`)
 - **연관 유즈케이스**: UC-11
 
 ## FR-18. 데이터 가져오기 (Import)
@@ -218,7 +219,7 @@
 - **수용 기준**:
   - Given 유효한 내보내기 파일이 있을 때, When 가져오기를 실행하면, Then 데이터가 복원된다.
   - Given 형식이 올바르지 않은 파일을 선택했을 때, When 가져오기를 시도하면, Then 오류 안내가 표시되고 기존 데이터는 변경되지 않는다.
-- **연관 데이터 모델**: 전체 엔티티 (`WorkoutSession`, `WorkoutPart`, `ExerciseBlock`, `WorkoutResult`, `Exercise`, `Tag`, `PersonalRecord`, `ConditionNote`, `WorkoutTemplate`, `TemplatePart`, `TemplateBlock`)
+- **연관 데이터 모델**: 전체 엔티티 (`WorkoutSession`, `WorkoutPart`, `BlockGroup`, `ExerciseBlock`, `WorkoutResult`, `Exercise`, `Tag`, `PersonalRecord`, `ConditionNote`, `WorkoutTemplate`, `TemplatePart`, `TemplateBlockGroup`, `TemplateBlock`)
 - **연관 유즈케이스**: UC-11
 
 ## FR-19. 종목/태그 검색형 선택 UI
@@ -235,3 +236,18 @@
   - Given 검색어와 일치하는 종목/태그가 없을 때, When 목록을 확인하면, Then "새로 추가" 진입점이 자연스럽게 노출된다.
 - **연관 데이터 모델**: `Exercise`, `Tag` (기존과 동일, 신규 필드 없음 — 선택 UI만 변경)
 - **연관 유즈케이스**: UC-01, UC-04, UC-06, UC-07, UC-08
+
+## FR-20. 세트 수행 방식(스트레이트 세트/서킷) 구분
+
+- **개요**: 파트 내 블록들을 그룹으로 묶고, 그룹 단위로 반복 라운드 수를 선언해 스트레이트 세트/서킷을 하나의 구조로 표현한다.
+- **상세 요구사항**:
+  - 파트는 블록을 직접 갖지 않고 `BlockGroup`(템플릿은 `TemplateBlockGroup`)을 통해 갖는다.
+  - 그룹은 몇 라운드 반복하는지(`rounds`)와 블록 목록을 갖는다. **그룹에 블록이 1개면 스트레이트 세트, 2개 이상이면 서킷** — 별도의 방식 플래그 없이 그룹의 블록 수 자체가 구분을 표현한다.
+  - 한 파트 안에 여러 그룹을 둘 수 있어, 서킷 구간과 스트레이트 구간을 섞어 구성할 수 있다.
+  - 기존 `ExerciseBlock.sets`/`TemplateBlock.sets` 필드는 제거되고 그룹의 `rounds`로 대체된다.
+- **수용 기준**:
+  - Given 파트에 그룹을 만들고 블록 2개(예: RDL, Reverse lunges)를 넣은 뒤 라운드 수를 3으로 지정하면, When 파트를 조회하면, Then 두 종목이 하나의 서킷 그룹으로 표시되고 라운드 수가 3으로 보인다.
+  - Given 그룹에 블록 1개만 있을 때, When 라운드 수를 5로 지정하면, Then 기존 "5세트" 스트레이트 세트와 동일한 의미로 동작한다.
+  - Given 템플릿을 세션에 적용하면, When 세션을 조회하면, Then 템플릿의 그룹 구성(라운드 수 포함)이 그대로 복사된다.
+- **연관 데이터 모델**: `WorkoutPart`, `BlockGroup`, `ExerciseBlock`, `TemplatePart`, `TemplateBlockGroup`, `TemplateBlock`
+- **연관 유즈케이스**: UC-01, UC-06

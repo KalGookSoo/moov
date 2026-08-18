@@ -6,19 +6,18 @@
 import SwiftUI
 import SwiftData
 
-/// 블록 편집. block이 nil이면(part가 반드시 전달됨) 새 블록을 생성한다. UC-01, FR-03, FR-10, FR-11.
+/// 블록 편집. block이 nil이면(group이 반드시 전달됨) 새 블록을 생성한다. UC-01, FR-03, FR-10, FR-11.
 struct BlockFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     let block: ExerciseBlock?
-    let part: WorkoutPart?
+    let group: BlockGroup?
 
     @State private var selectedExercise: Exercise?
     @State private var weight: Double?
     @State private var weightUnit: WeightUnit = .lb
     @State private var reps: Int?
-    @State private var sets: Int? = 1
     @State private var restSeconds: Int?
     @State private var selectedTags: Set<Tag> = []
 
@@ -43,8 +42,6 @@ struct BlockFormView: View {
                     .frame(width: 120)
                 }
                 TextField("반복수", value: $reps, format: .number)
-                    .keyboardType(.numberPad)
-                TextField("세트수", value: $sets, format: .number)
                     .keyboardType(.numberPad)
                 TextField("휴식시간(초)", value: $restSeconds, format: .number)
                     .keyboardType(.numberPad)
@@ -74,7 +71,6 @@ struct BlockFormView: View {
         weight = block.weight
         weightUnit = block.weightUnit ?? .lb
         reps = block.reps
-        sets = block.sets
         restSeconds = block.restSeconds
         selectedTags = Set(block.tags)
     }
@@ -88,22 +84,20 @@ struct BlockFormView: View {
             block.weight = weight
             block.weightUnit = weightUnit
             block.reps = reps
-            block.sets = sets
             block.restSeconds = restSeconds
             block.tags = Array(selectedTags)
-        } else if let part {
+        } else if let group {
             let newBlock = ExerciseBlock(
-                order: part.blocks.count,
+                order: group.blocks.count,
                 exercise: selectedExercise,
                 weight: weight,
                 weightUnit: weightUnit,
                 reps: reps,
-                sets: sets,
                 restSeconds: restSeconds,
                 tags: Array(selectedTags)
             )
             modelContext.insert(newBlock)
-            part.blocks.append(newBlock)
+            group.blocks.append(newBlock)
         }
 
         dismiss()
@@ -112,7 +106,7 @@ struct BlockFormView: View {
 
 #Preview {
     NavigationStack {
-        BlockFormView(block: nil, part: WorkoutPart(order: 0, format: .amrap))
+        BlockFormView(block: nil, group: BlockGroup(order: 0))
     }
     .modelContainer(for: WorkoutSession.self, inMemory: true)
 }

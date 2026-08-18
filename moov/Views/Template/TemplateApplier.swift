@@ -18,22 +18,28 @@ enum TemplateApplier {
             context.insert(newPart)
             session.parts.append(newPart)
 
-            let templateBlocks = templatePart.blocks.sorted { $0.order < $1.order }
-            for templateBlock in templateBlocks {
-                // 템플릿 저장 당시 참조하던 종목이 카탈로그에서 삭제된 경우, 해당 블록은 건너뛴다.
-                guard let exercise = templateBlock.exercise else { continue }
-                let newBlock = ExerciseBlock(
-                    order: newPart.blocks.count,
-                    exercise: exercise,
-                    weight: templateBlock.weight,
-                    weightUnit: templateBlock.weightUnit,
-                    reps: templateBlock.reps,
-                    sets: templateBlock.sets,
-                    restSeconds: templateBlock.restSeconds,
-                    tags: templateBlock.tags
-                )
-                context.insert(newBlock)
-                newPart.blocks.append(newBlock)
+            let templateGroups = templatePart.groups.sorted { $0.order < $1.order }
+            for templateGroup in templateGroups {
+                let newGroup = BlockGroup(order: newPart.groups.count, rounds: templateGroup.rounds)
+                context.insert(newGroup)
+                newPart.groups.append(newGroup)
+
+                let templateBlocks = templateGroup.blocks.sorted { $0.order < $1.order }
+                for templateBlock in templateBlocks {
+                    // 템플릿 저장 당시 참조하던 종목이 카탈로그에서 삭제된 경우, 해당 블록은 건너뛴다.
+                    guard let exercise = templateBlock.exercise else { continue }
+                    let newBlock = ExerciseBlock(
+                        order: newGroup.blocks.count,
+                        exercise: exercise,
+                        weight: templateBlock.weight,
+                        weightUnit: templateBlock.weightUnit,
+                        reps: templateBlock.reps,
+                        restSeconds: templateBlock.restSeconds,
+                        tags: templateBlock.tags
+                    )
+                    context.insert(newBlock)
+                    newGroup.blocks.append(newBlock)
+                }
             }
         }
     }

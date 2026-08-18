@@ -11,7 +11,7 @@ struct TemplatePartFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var part: TemplatePart
 
-    @State private var isAddingBlock = false
+    @State private var groupForNewBlock: TemplateBlockGroup?
     @State private var blockToEdit: TemplateBlock?
 
     var body: some View {
@@ -24,51 +24,108 @@ struct TemplatePartFormView: View {
                 }
             }
 
-            Section("블록") {
-                if part.blocks.isEmpty {
+            if part.groups.isEmpty {
+                Section("그룹") {
                     ContentUnavailableView {
-                        Label("블록이 없어요", systemImage: "dumbbell")
+                        Label("그룹이 없어요", systemImage: "dumbbell")
                     } description: {
-                        Text("종목을 추가해 이 파트에서 수행할 운동을 구성해보세요.")
+                        Text("종목을 그룹으로 묶고, 몇 라운드 반복할지 정해보세요. 그룹에 종목이 1개면 스트레이트 세트, 2개 이상이면 서킷이 됩니다.")
                     } actions: {
-                        Button("블록 추가") { isAddingBlock = true }
+                        Button("그룹 추가") { addGroup() }
                             .buttonStyle(.borderedProminent)
                     }
-                } else {
-                    ForEach(sortedBlocks) { block in
-                        Button {
-                            blockToEdit = block
-                        } label: {
-                            TemplateBlockRow(block: block)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .onDelete(perform: deleteBlocks)
+                }
+            } else {
+                ForEach(sortedGroups) { group in
+                    TemplateGroupSection(
+                        group: group,
+                        onAddBlock: { groupForNewBlock = group },
+                        onEditBlock: { blockToEdit = $0 },
+                        onDeleteGroup: { deleteGroup(group) }
+                    )
+                }
 
+                Section {
                     Button {
-                        isAddingBlock = true
+                        addGroup()
                     } label: {
-                        Label("블록 추가", systemImage: "plus")
+                        Label("그룹 추가", systemImage: "plus")
                     }
                 }
             }
         }
         .navigationTitle(part.format.displayName)
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $isAddingBlock) {
+        .sheet(item: $groupForNewBlock) { group in
             NavigationStack {
-                TemplateBlockFormView(block: nil, part: part)
+                TemplateBlockFormView(block: nil, group: group)
             }
         }
         .sheet(item: $blockToEdit) { block in
             NavigationStack {
-                TemplateBlockFormView(block: block, part: nil)
+                TemplateBlockFormView(block: block, group: nil)
             }
         }
     }
 
+    private var sortedGroups: [TemplateBlockGroup] {
+        part.groups.sorted { $0.order < $1.order }
+    }
+
+    private func addGroup() {
+        let newGroup = TemplateBlockGroup(order: part.groups.count)
+        modelContext.insert(newGroup)
+        part.groups.append(newGroup)
+    }
+
+    private func deleteGroup(_ group: TemplateBlockGroup) {
+        modelContext.delete(group)
+    }
+}
+
+private struct TemplateGroupSection: View {
+    @Environment(\.modelContext) private var modelContext
+    @Bindable var group: TemplateBlockGroup
+    let onAddBlock: () -> Void
+    let onEditBlock: (TemplateBlock) -> Void
+    let onDeleteGroup: () -> Void
+
     private var sortedBlocks: [TemplateBlock] {
-        part.blocks.sorted { $0.order < $1.order }
+        group.blocks.sorted { $0.order < $1.order }
+    }
+
+    var body: some View {
+        Section {
+            Stepper("라운드 수 \(group.rounds)", value: $group.rounds, in: 1...99)
+
+            ForEach(sortedBlocks) { block in
+                Button {
+                    onEditBlock(block)
+                } label: {
+                    TemplateBlockRow(block: block)
+                }
+                .buttonStyle(.plain)
+            }
+            .onDelete(perform: deleteBlocks)
+
+            Button {
+                onAddBlock()
+            } label: {
+                Label("종목 추가", systemImage: "plus")
+            }
+
+            Button(role: .destructive) {
+                onDeleteGroup()
+            } label: {
+                Text("그룹 삭제")
+            }
+        } header: {
+            Text(sortedBlocks.count > 1 ? "서킷 그룹" : "그룹")
+        } footer: {
+            if sortedBlocks.count > 1 {
+                Text("\(sortedBlocks.count)개 종목을 번갈아 \(group.rounds)라운드 수행합니다.")
+            }
+        }
     }
 
     private func deleteBlocks(at offsets: IndexSet) {
@@ -100,7 +157,6 @@ private struct TemplateBlockRow: View {
             pieces.append("\(weight.formatted())\(unit)")
         }
         if let reps = block.reps { pieces.append("\(reps)회") }
-        if let sets = block.sets { pieces.append("\(sets)세트") }
         if !block.tags.isEmpty {
             pieces.append(block.tags.map(\.name).joined(separator: ", "))
         }

@@ -24,10 +24,15 @@ struct TemplateApplierTests {
         template.templateParts.append(templatePart)
         templatePart.template = template
 
+        let templateGroup = TemplateBlockGroup(order: 0, rounds: 3)
+        context.insert(templateGroup)
+        templatePart.groups.append(templateGroup)
+        templateGroup.templatePart = templatePart
+
         let templateBlock = TemplateBlock(order: 0, exercise: exercise, weight: 43, weightUnit: .kg, reps: 21, tags: [tag])
         context.insert(templateBlock)
-        templatePart.blocks.append(templateBlock)
-        templateBlock.templatePart = templatePart
+        templateGroup.blocks.append(templateBlock)
+        templateBlock.group = templateGroup
 
         let session = WorkoutSession(date: .now)
         context.insert(session)
@@ -37,9 +42,13 @@ struct TemplateApplierTests {
         #expect(session.parts.count == 1)
         let newPart = try #require(session.parts.first)
         #expect(newPart.format == .forTime)
-        #expect(newPart.blocks.count == 1)
+        #expect(newPart.groups.count == 1)
 
-        let newBlock = try #require(newPart.blocks.first)
+        let newGroup = try #require(newPart.groups.first)
+        #expect(newGroup.rounds == 3)
+        #expect(newGroup.blocks.count == 1)
+
+        let newBlock = try #require(newGroup.blocks.first)
         #expect(newBlock.exercise?.name == "Thruster")
         #expect(newBlock.weight == 43)
         #expect(newBlock.weightUnit == .kg)
@@ -85,10 +94,15 @@ struct TemplateApplierTests {
         template.templateParts.append(templatePart)
         templatePart.template = template
 
+        let templateGroup = TemplateBlockGroup(order: 0)
+        context.insert(templateGroup)
+        templatePart.groups.append(templateGroup)
+        templateGroup.templatePart = templatePart
+
         let templateBlock = TemplateBlock(order: 0, exercise: exercise)
         context.insert(templateBlock)
-        templatePart.blocks.append(templateBlock)
-        templateBlock.templatePart = templatePart
+        templateGroup.blocks.append(templateBlock)
+        templateBlock.group = templateGroup
 
         try context.save()
         context.delete(exercise)
@@ -100,6 +114,6 @@ struct TemplateApplierTests {
         TemplateApplier.apply(template, to: session, using: context)
 
         #expect(session.parts.count == 1)
-        #expect(session.parts.first?.blocks.isEmpty == true)
+        #expect(session.parts.first?.groups.first?.blocks.isEmpty == true)
     }
 }

@@ -11,7 +11,7 @@ struct PartFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var part: WorkoutPart
 
-    @State private var isAddingBlock = false
+    @State private var groupForNewBlock: BlockGroup?
     @State private var blockToEdit: ExerciseBlock?
 
     var body: some View {
@@ -29,31 +29,32 @@ struct PartFormView: View {
                 }
             }
 
-            Section("블록") {
-                if part.blocks.isEmpty {
+            if part.groups.isEmpty {
+                Section("그룹") {
                     ContentUnavailableView {
-                        Label("블록이 없어요", systemImage: "dumbbell")
+                        Label("그룹이 없어요", systemImage: "dumbbell")
                     } description: {
-                        Text("종목을 추가해 이 파트에서 수행할 운동을 기록해보세요.")
+                        Text("종목을 그룹으로 묶고, 몇 라운드 반복할지 정해보세요. 그룹에 종목이 1개면 스트레이트 세트, 2개 이상이면 서킷이 됩니다.")
                     } actions: {
-                        Button("블록 추가") { isAddingBlock = true }
+                        Button("그룹 추가") { addGroup() }
                             .buttonStyle(.borderedProminent)
                     }
-                } else {
-                    ForEach(sortedBlocks) { block in
-                        Button {
-                            blockToEdit = block
-                        } label: {
-                            BlockRow(block: block)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .onDelete(perform: deleteBlocks)
+                }
+            } else {
+                ForEach(sortedGroups) { group in
+                    GroupSection(
+                        group: group,
+                        onAddBlock: { groupForNewBlock = group },
+                        onEditBlock: { blockToEdit = $0 },
+                        onDeleteGroup: { deleteGroup(group) }
+                    )
+                }
 
+                Section {
                     Button {
-                        isAddingBlock = true
+                        addGroup()
                     } label: {
-                        Label("블록 추가", systemImage: "plus")
+                        Label("그룹 추가", systemImage: "plus")
                     }
                 }
             }
@@ -64,20 +65,30 @@ struct PartFormView: View {
         }
         .navigationTitle(part.format.displayName)
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $isAddingBlock) {
+        .sheet(item: $groupForNewBlock) { group in
             NavigationStack {
-                BlockFormView(block: nil, part: part)
+                BlockFormView(block: nil, group: group)
             }
         }
         .sheet(item: $blockToEdit) { block in
             NavigationStack {
-                BlockFormView(block: block, part: nil)
+                BlockFormView(block: block, group: nil)
             }
         }
     }
 
-    private var sortedBlocks: [ExerciseBlock] {
-        part.blocks.sorted { $0.order < $1.order }
+    private var sortedGroups: [BlockGroup] {
+        part.groups.sorted { $0.order < $1.order }
+    }
+
+    private func addGroup() {
+        let newGroup = BlockGroup(order: part.groups.count)
+        modelContext.insert(newGroup)
+        part.groups.append(newGroup)
+    }
+
+    private func deleteGroup(_ group: BlockGroup) {
+        modelContext.delete(group)
     }
 
     private var timeCapEnabledBinding: Binding<Bool> {
@@ -98,6 +109,55 @@ struct PartFormView: View {
             get: { (part.timeCapSeconds ?? 600) / 60 },
             set: { part.timeCapSeconds = $0 * 60 }
         )
+    }
+
+}
+
+/// 그룹 하나(라운드 수 + 블록 목록)를 나타내는 Section. 블록이 1개면 스트레이트 세트,
+/// 2개 이상이면 서킷을 뜻한다. FR-20.
+private struct GroupSection: View {
+    @Environment(\.modelContext) private var modelContext
+    @Bindable var group: BlockGroup
+    let onAddBlock: () -> Void
+    let onEditBlock: (ExerciseBlock) -> Void
+    let onDeleteGroup: () -> Void
+
+    private var sortedBlocks: [ExerciseBlock] {
+        group.blocks.sorted { $0.order < $1.order }
+    }
+
+    var body: some View {
+        Section {
+            Stepper("라운드 수 \(group.rounds)", value: $group.rounds, in: 1...99)
+
+            ForEach(sortedBlocks) { block in
+                Button {
+                    onEditBlock(block)
+                } label: {
+                    BlockRow(block: block)
+                }
+                .buttonStyle(.plain)
+            }
+            .onDelete(perform: deleteBlocks)
+
+            Button {
+                onAddBlock()
+            } label: {
+                Label("종목 추가", systemImage: "plus")
+            }
+
+            Button(role: .destructive) {
+                onDeleteGroup()
+            } label: {
+                Text("그룹 삭제")
+            }
+        } header: {
+            Text(sortedBlocks.count > 1 ? "서킷 그룹" : "그룹")
+        } footer: {
+            if sortedBlocks.count > 1 {
+                Text("\(sortedBlocks.count)개 종목을 번갈아 \(group.rounds)라운드 수행합니다.")
+            }
+        }
     }
 
     private func deleteBlocks(at offsets: IndexSet) {
@@ -129,7 +189,6 @@ private struct BlockRow: View {
             pieces.append("\(weight.formatted())\(unit)")
         }
         if let reps = block.reps { pieces.append("\(reps)회") }
-        if let sets = block.sets { pieces.append("\(sets)세트") }
         if !block.tags.isEmpty {
             pieces.append(block.tags.map(\.name).joined(separator: ", "))
         }

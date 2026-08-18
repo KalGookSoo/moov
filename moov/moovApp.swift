@@ -14,6 +14,7 @@ struct moovApp: App {
         let schema = Schema([
             WorkoutSession.self,
             WorkoutPart.self,
+            BlockGroup.self,
             ExerciseBlock.self,
             WorkoutResult.self,
             Exercise.self,
@@ -22,6 +23,7 @@ struct moovApp: App {
             ConditionNote.self,
             WorkoutTemplate.self,
             TemplatePart.self,
+            TemplateBlockGroup.self,
             TemplateBlock.self,
         ])
         // UI 테스트는 실제 기기 저장소를 오염시키지 않도록 인메모리 저장소를 사용한다.

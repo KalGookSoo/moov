@@ -24,13 +24,25 @@ struct TagWeeklyAggregatorTests {
         session.parts.append(part)
         part.session = session
 
-        let taggedBlock1 = ExerciseBlock(order: 0, exercise: exercise, reps: 10, sets: 3, tags: [tag])
-        let taggedBlock2 = ExerciseBlock(order: 1, exercise: exercise, reps: 5, sets: 2, tags: [tag])
-        let untaggedBlock = ExerciseBlock(order: 2, exercise: exercise, reps: 100, sets: 100)
-        part.blocks.append(contentsOf: [taggedBlock1, taggedBlock2, untaggedBlock])
-        taggedBlock1.part = part
-        taggedBlock2.part = part
-        untaggedBlock.part = part
+        let taggedGroup1 = BlockGroup(order: 0, rounds: 3)
+        let taggedBlock1 = ExerciseBlock(order: 0, exercise: exercise, reps: 10, tags: [tag])
+        taggedGroup1.blocks.append(taggedBlock1)
+        taggedBlock1.group = taggedGroup1
+
+        let taggedGroup2 = BlockGroup(order: 1, rounds: 2)
+        let taggedBlock2 = ExerciseBlock(order: 0, exercise: exercise, reps: 5, tags: [tag])
+        taggedGroup2.blocks.append(taggedBlock2)
+        taggedBlock2.group = taggedGroup2
+
+        let untaggedGroup = BlockGroup(order: 2, rounds: 100)
+        let untaggedBlock = ExerciseBlock(order: 0, exercise: exercise, reps: 100)
+        untaggedGroup.blocks.append(untaggedBlock)
+        untaggedBlock.group = untaggedGroup
+
+        part.groups.append(contentsOf: [taggedGroup1, taggedGroup2, untaggedGroup])
+        taggedGroup1.part = part
+        taggedGroup2.part = part
+        untaggedGroup.part = part
 
         let buckets = TagWeeklyAggregator.aggregate(
             blocks: [taggedBlock1, taggedBlock2, untaggedBlock],
@@ -51,18 +63,24 @@ struct TagWeeklyAggregatorTests {
         let part1 = WorkoutPart(order: 0, format: .strength)
         session1.parts.append(part1)
         part1.session = session1
-        let block1 = ExerciseBlock(order: 0, exercise: exercise, reps: 5, sets: 5, tags: [tag])
-        part1.blocks.append(block1)
-        block1.part = part1
+        let group1 = BlockGroup(order: 0, rounds: 5)
+        let block1 = ExerciseBlock(order: 0, exercise: exercise, reps: 5, tags: [tag])
+        group1.blocks.append(block1)
+        block1.group = group1
+        part1.groups.append(group1)
+        group1.part = part1
 
         let twoWeeksLater = Date(timeIntervalSince1970: 0).addingTimeInterval(14 * 86_400)
         let session2 = WorkoutSession(date: twoWeeksLater)
         let part2 = WorkoutPart(order: 0, format: .strength)
         session2.parts.append(part2)
         part2.session = session2
-        let block2 = ExerciseBlock(order: 0, exercise: exercise, reps: 5, sets: 5, tags: [tag])
-        part2.blocks.append(block2)
-        block2.part = part2
+        let group2 = BlockGroup(order: 0, rounds: 5)
+        let block2 = ExerciseBlock(order: 0, exercise: exercise, reps: 5, tags: [tag])
+        group2.blocks.append(block2)
+        block2.group = group2
+        part2.groups.append(group2)
+        group2.part = part2
 
         let buckets = TagWeeklyAggregator.aggregate(
             blocks: [block1, block2],

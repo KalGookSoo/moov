@@ -14,6 +14,7 @@ enum TestSupport {
         let schema = Schema([
             WorkoutSession.self,
             WorkoutPart.self,
+            BlockGroup.self,
             ExerciseBlock.self,
             WorkoutResult.self,
             Exercise.self,
@@ -22,6 +23,7 @@ enum TestSupport {
             ConditionNote.self,
             WorkoutTemplate.self,
             TemplatePart.self,
+            TemplateBlockGroup.self,
             TemplateBlock.self,
         ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)

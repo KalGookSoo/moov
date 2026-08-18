@@ -28,14 +28,31 @@ final class TemplatePart {
     var id: UUID
     var order: Int
     var format: WorkoutFormat
-    @Relationship(deleteRule: .cascade, inverse: \TemplateBlock.templatePart)
-    var blocks: [TemplateBlock] = []
+    @Relationship(deleteRule: .cascade, inverse: \TemplateBlockGroup.templatePart)
+    var groups: [TemplateBlockGroup] = []
     var template: WorkoutTemplate?
 
     init(order: Int, format: WorkoutFormat) {
         self.id = UUID()
         self.order = order
         self.format = format
+    }
+}
+
+/// `BlockGroup`의 템플릿 버전. 블록이 1개면 스트레이트 세트, 2개 이상이면 서킷을 뜻한다. FR-20.
+@Model
+final class TemplateBlockGroup {
+    var id: UUID
+    var order: Int
+    var rounds: Int
+    @Relationship(deleteRule: .cascade, inverse: \TemplateBlock.group)
+    var blocks: [TemplateBlock] = []
+    var templatePart: TemplatePart?
+
+    init(order: Int, rounds: Int = 1) {
+        self.id = UUID()
+        self.order = order
+        self.rounds = rounds
     }
 }
 
@@ -49,10 +66,9 @@ final class TemplateBlock {
     var weight: Double?
     var weightUnit: WeightUnit?
     var reps: Int?
-    var sets: Int?
     var restSeconds: Int?
     @Relationship var tags: [Tag] = []
-    var templatePart: TemplatePart?
+    var group: TemplateBlockGroup?
 
     init(
         order: Int,
@@ -60,7 +76,6 @@ final class TemplateBlock {
         weight: Double? = nil,
         weightUnit: WeightUnit? = nil,
         reps: Int? = nil,
-        sets: Int? = nil,
         restSeconds: Int? = nil,
         tags: [Tag] = []
     ) {
@@ -71,7 +86,6 @@ final class TemplateBlock {
         self.weight = weight
         self.weightUnit = weightUnit
         self.reps = reps
-        self.sets = sets
         self.restSeconds = restSeconds
         self.tags = tags
     }

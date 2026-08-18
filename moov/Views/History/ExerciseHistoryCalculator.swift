@@ -11,7 +11,7 @@ enum ExerciseHistoryCalculator {
     static func makeEntries(from blocks: [ExerciseBlock]) -> [(date: Date, block: ExerciseBlock)] {
         blocks
             .compactMap { block in
-                guard let date = block.part?.session?.date else { return nil }
+                guard let date = block.group?.part?.session?.date else { return nil }
                 return (date, block)
             }
             .sorted { $0.date < $1.date }

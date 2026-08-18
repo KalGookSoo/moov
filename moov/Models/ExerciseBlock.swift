@@ -6,7 +6,8 @@
 import Foundation
 import SwiftData
 
-/// 종목 단위 블록. 하나 이상의 태그로 웜업/본운동/보조운동 등을 구분한다. FR-03, FR-10.
+/// 종목 단위 블록. 하나 이상의 태그로 웜업/본운동/보조운동 등을 구분한다.
+/// 몇 라운드 반복하는지는 블록이 아니라 소속된 `BlockGroup`이 정한다. FR-03, FR-10, FR-20.
 @Model
 final class ExerciseBlock {
     var id: UUID
@@ -17,10 +18,9 @@ final class ExerciseBlock {
     var weight: Double?
     var weightUnit: WeightUnit?
     var reps: Int?
-    var sets: Int?
     var restSeconds: Int?
     @Relationship var tags: [Tag] = []
-    var part: WorkoutPart?
+    var group: BlockGroup?
 
     init(
         order: Int,
@@ -28,7 +28,6 @@ final class ExerciseBlock {
         weight: Double? = nil,
         weightUnit: WeightUnit? = nil,
         reps: Int? = nil,
-        sets: Int? = nil,
         restSeconds: Int? = nil,
         tags: [Tag] = []
     ) {
@@ -39,7 +38,6 @@ final class ExerciseBlock {
         self.weight = weight
         self.weightUnit = weightUnit
         self.reps = reps
-        self.sets = sets
         self.restSeconds = restSeconds
         self.tags = tags
     }

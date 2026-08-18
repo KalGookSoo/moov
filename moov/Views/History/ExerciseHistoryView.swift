@@ -100,7 +100,13 @@ private struct HistoryRow: View {
             pieces.append("\(weight.formatted())\(block.weightUnit?.displayName ?? "")")
         }
         if let reps = block.reps { pieces.append("\(reps)회") }
-        if let sets = block.sets { pieces.append("\(sets)세트") }
+        if let group = block.group {
+            if group.blocks.count > 1 {
+                pieces.append("\(group.rounds)라운드")
+            } else if group.rounds > 1 {
+                pieces.append("\(group.rounds)세트")
+            }
+        }
         return pieces.isEmpty ? "-" : pieces.joined(separator: " · ")
     }
 }

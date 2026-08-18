@@ -193,11 +193,15 @@ private struct PartRow: View {
 
     private var summary: String {
         var pieces: [String] = []
-        pieces.append(part.blocks.isEmpty ? "블록 없음" : "블록 \(part.blocks.count)개")
+        pieces.append(blockCount == 0 ? "블록 없음" : "블록 \(blockCount)개")
         if part.result != nil {
             pieces.append("결과 입력됨")
         }
         return pieces.joined(separator: " · ")
+    }
+
+    private var blockCount: Int {
+        part.groups.reduce(0) { $0 + $1.blocks.count }
     }
 }
 

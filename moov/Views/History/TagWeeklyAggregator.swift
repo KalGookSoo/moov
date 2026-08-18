@@ -21,7 +21,7 @@ enum TagWeeklyAggregator {
         blocks
             .compactMap { block in
                 guard block.tags.contains(where: { $0.id == tag.id }),
-                      let date = block.part?.session?.date else { return nil }
+                      let date = block.group?.part?.session?.date else { return nil }
                 return (date, block)
             }
             .sorted { $0.date < $1.date }
@@ -35,9 +35,9 @@ enum TagWeeklyAggregator {
         for entry in entries {
             let weekStart = calendar.dateInterval(of: .weekOfYear, for: entry.date)?.start ?? entry.date
             let reps = entry.block.reps ?? 0
-            let sets = entry.block.sets ?? 1
+            let rounds = entry.block.group?.rounds ?? 1
             var bucket = buckets[weekStart] ?? (volume: 0, frequency: 0)
-            bucket.volume += reps * sets
+            bucket.volume += reps * rounds
             bucket.frequency += 1
             buckets[weekStart] = bucket
         }

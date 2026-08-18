@@ -14,8 +14,8 @@ final class WorkoutPart {
     var order: Int
     var format: WorkoutFormat
     var timeCapSeconds: Int?
-    @Relationship(deleteRule: .cascade, inverse: \ExerciseBlock.part)
-    var blocks: [ExerciseBlock] = []
+    @Relationship(deleteRule: .cascade, inverse: \BlockGroup.part)
+    var groups: [BlockGroup] = []
     /// 웜업처럼 결과를 남기지 않는 파트도 있을 수 있으므로 옵셔널이다.
     @Relationship(deleteRule: .cascade, inverse: \WorkoutResult.part)
     var result: WorkoutResult?

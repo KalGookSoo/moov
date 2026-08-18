@@ -109,11 +109,15 @@ private struct TemplatePartRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(part.format.displayName)
                 .font(.headline)
-            Text(part.blocks.isEmpty ? "블록 없음" : "블록 \(part.blocks.count)개")
+            Text(blockCount == 0 ? "블록 없음" : "블록 \(blockCount)개")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+    }
+
+    private var blockCount: Int {
+        part.groups.reduce(0) { $0 + $1.blocks.count }
     }
 }
 
