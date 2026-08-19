@@ -9,6 +9,14 @@ import SwiftData
 /// 가져오기 JSON 최상위 구조. docs/import-format.md 참고. FR-22.
 struct WorkoutImportPayload: Decodable {
     let sessions: [ImportSession]
+    var personalRecords: [ImportPersonalRecord]? = nil
+}
+
+struct ImportPersonalRecord: Decodable {
+    let exercise: String
+    let weight: Double
+    let weightUnit: String
+    let date: String
 }
 
 struct ImportSession: Decodable {
@@ -84,7 +92,10 @@ enum WorkoutImporter {
     /// 가져온 세션 개수를 반환한다.
     @discardableResult
     static func apply(_ payload: WorkoutImportPayload, using context: ModelContext) throws -> Int {
-        guard !payload.sessions.isEmpty else { throw WorkoutImportError.emptySessions }
+        let importRecords = payload.personalRecords ?? []
+        guard !payload.sessions.isEmpty || !importRecords.isEmpty else {
+            throw WorkoutImportError.emptySessions
+        }
 
         for importSession in payload.sessions {
             guard dateFormatter.date(from: importSession.date) != nil else {
@@ -113,6 +124,15 @@ enum WorkoutImporter {
                         }
                     }
                 }
+            }
+        }
+
+        for importRecord in importRecords {
+            guard dateFormatter.date(from: importRecord.date) != nil else {
+                throw WorkoutImportError.invalidDate(importRecord.date)
+            }
+            guard WeightUnit(rawValue: importRecord.weightUnit) != nil else {
+                throw WorkoutImportError.invalidWeightUnit(importRecord.weightUnit)
             }
         }
 
@@ -158,6 +178,17 @@ enum WorkoutImporter {
                     }
                 }
             }
+        }
+
+        for importRecord in importRecords {
+            let exercise = findOrCreateExercise(named: importRecord.exercise, in: &exercises, context: context)
+            let record = PersonalRecord(
+                exercise: exercise,
+                weight: importRecord.weight,
+                weightUnit: WeightUnit(rawValue: importRecord.weightUnit)!,
+                date: dateFormatter.date(from: importRecord.date)!
+            )
+            context.insert(record)
         }
 
         return payload.sessions.count

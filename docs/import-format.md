@@ -10,9 +10,13 @@
 
 ```json
 {
-  "sessions": [ /* ImportSession 배열, 1개 이상 */ ]
+  "sessions": [ /* ImportSession 배열 */ ],
+  "personalRecords": [ /* ImportPersonalRecord 배열, 선택 */ ]
 }
 ```
+
+`sessions`와 `personalRecords` 중 하나는 비어 있지 않아야 한다(둘 다 비어 있으면 가져올 내용이
+없다는 오류). `personalRecords`를 아예 생략해도 된다(기존 파일과 하위 호환).
 
 ## ImportSession
 
@@ -51,10 +55,23 @@
 | restSeconds | Int? | - | 휴식시간(초) |
 | tags | [String]? | - | 태그명 배열. 카탈로그에 이름이 있으면 재사용, 없으면 새로 생성 |
 
+## ImportPersonalRecord
+
+PR(1RM) 기록. `moov/Views/PersonalRecord`의 PR 기능(FR-07)에 그대로 등록된다 — append-only
+로그라 같은 종목의 값을 여러 날짜로 여러 번 넣어도 된다(현재 PR은 조회 시점의 최댓값으로 계산).
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| exercise | String | O | 종목명. `ImportBlock.exercise`와 동일한 방식으로 매칭/생성 |
+| weight | Double | O | 무게 |
+| weightUnit | String | O | `WeightUnit` rawValue: `lb`/`kg` (블록과 달리 필수 — PR은 무게 없이 존재할 수 없음) |
+| date | String | O | `yyyy-MM-dd` |
+
 ## 검증과 원자성
 
 가져오기 전 전체 파일을 검증한다 — 날짜 형식, `format`/`weightUnit`/`repsUnit` rawValue 유효성,
-파트/그룹/블록이 각각 1개 이상 있는지. 하나라도 실패하면 **아무 데이터도 생성되지 않는다**.
+파트/그룹/블록이 각각 1개 이상 있는지, `personalRecords`의 `weightUnit`/날짜 유효성.
+하나라도 실패하면 **아무 데이터도 생성되지 않는다**.
 
 ## 예시
 
@@ -95,6 +112,9 @@ WOD(Bar over burpee 20회 + Wallball 20lb×15회 + Deadlift 135lb×20회 + Row 4
         }
       ]
     }
+  ],
+  "personalRecords": [
+    { "exercise": "Deadlift", "weight": 285, "weightUnit": "lb", "date": "2026-01-31" }
   ]
 }
 ```

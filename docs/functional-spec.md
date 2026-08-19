@@ -277,10 +277,12 @@
   - 포맷 상세는 [docs/import-format.md](./import-format.md) 참고.
   - 가져오기 전 전체 파일을 검증하고, 하나라도 실패하면 아무것도 삽입하지 않는다(원자적 가져오기).
   - 종목/태그는 이름으로 매칭(대소문자 무시)하며, 카탈로그에 없으면 새로 생성한다.
-  - 성공 시 가져온 세션 수를, 실패 시 구체적인 오류 사유를 안내한다.
+  - 세션과 별개로 `personalRecords` 배열을 선택적으로 포함할 수 있다 — PR(1RM) 기록을 FR-07 PR 기능에 그대로 등록한다. 종목은 세션 블록과 동일하게 이름으로 매칭/생성한다.
+  - 성공 시 가져온 세션 수(및 PR이 있으면 PR 수)를, 실패 시 구체적인 오류 사유를 안내한다.
 - **수용 기준**:
   - Given 웜업+WOD로 구성된 유효한 JSON 파일을 선택하면, When 가져오기를 실행하면, Then 파일에 정의된 그대로 세션/파트/그룹/블록이 생성되고 기존에 없던 종목/태그는 카탈로그에 자동 추가된다.
   - Given 포맷 문자열이 잘못된 파일을 선택하면, When 가져오기를 시도하면, Then 오류가 안내되고 아무 데이터도 생성되지 않는다.
   - Given 이미 카탈로그에 있는 종목명(대소문자만 다름)을 참조하면, When 가져오면, Then 기존 종목을 재사용하고 중복 생성하지 않는다.
-- **연관 데이터 모델**: `WorkoutSession`, `WorkoutPart`, `BlockGroup`, `ExerciseBlock`, `Exercise`, `Tag`
-- **연관 유즈케이스**: UC-01
+  - Given `personalRecords`가 포함된 파일을 가져오면, When 가져오기를 실행하면, Then 해당 PR이 등록되고 PR 화면에서 조회된다.
+- **연관 데이터 모델**: `WorkoutSession`, `WorkoutPart`, `BlockGroup`, `ExerciseBlock`, `PersonalRecord`, `Exercise`, `Tag`
+- **연관 유즈케이스**: UC-01, UC-04

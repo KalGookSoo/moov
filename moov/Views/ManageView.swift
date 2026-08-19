@@ -261,7 +261,12 @@ struct ManageView: View {
             let data = try Data(contentsOf: url)
             let payload = try JSONDecoder().decode(WorkoutImportPayload.self, from: data)
             let count = try WorkoutImporter.apply(payload, using: modelContext)
-            importResultMessage = "\(count)개 세션을 가져왔습니다."
+            let recordCount = payload.personalRecords?.count ?? 0
+            if recordCount > 0 {
+                importResultMessage = "세션 \(count)개, PR \(recordCount)개를 가져왔습니다."
+            } else {
+                importResultMessage = "\(count)개 세션을 가져왔습니다."
+            }
         } catch {
             importErrorMessage = error.localizedDescription
         }
