@@ -19,6 +19,11 @@ struct ManageView: View {
     @State private var isPresentingExportSheet = false
     @State private var exportFileURL: URL?
     @State private var exportErrorMessage: String?
+    @State private var isImportingBackup = false
+    @State private var pendingBackupPayload: BackupPayload?
+    @State private var isPresentingMergeConfirmation = false
+    @State private var backupImportResultMessage: String?
+    @State private var backupImportErrorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -41,11 +46,17 @@ struct ManageView: View {
                     Label("태그 카탈로그", systemImage: "tag")
                 }
 
-                Section("내보내기") {
+                Section("백업") {
                     Button {
                         exportWorkouts()
                     } label: {
                         Label("데이터 내보내기", systemImage: "square.and.arrow.up")
+                    }
+
+                    Button {
+                        isImportingBackup = true
+                    } label: {
+                        Label("백업에서 복원", systemImage: "arrow.counterclockwise")
                     }
                 }
 
@@ -121,6 +132,35 @@ struct ManageView: View {
         } message: {
             Text(exportErrorMessage ?? "")
         }
+        .fileImporter(isPresented: $isImportingBackup, allowedContentTypes: [.json]) { result in
+            switch result {
+            case .success(let url):
+                loadBackup(from: url)
+            case .failure(let error):
+                backupImportErrorMessage = error.localizedDescription
+            }
+        }
+        .confirmationDialog(
+            "기존 데이터가 있습니다",
+            isPresented: $isPresentingMergeConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("병합") { performBackupImport(strategy: .merge) }
+            Button("교체", role: .destructive) { performBackupImport(strategy: .replace) }
+            Button("취소", role: .cancel) { pendingBackupPayload = nil }
+        } message: {
+            Text("병합하면 기존 데이터에 백업 내용이 추가되고, 교체하면 기존 데이터를 모두 지운 뒤 백업 내용으로 되살립니다.")
+        }
+        .alert("복원 완료", isPresented: backupImportSuccessBinding) {
+            Button("확인") {}
+        } message: {
+            Text(backupImportResultMessage ?? "")
+        }
+        .alert("복원 실패", isPresented: backupImportErrorBinding) {
+            Button("확인") {}
+        } message: {
+            Text(backupImportErrorMessage ?? "")
+        }
     }
 
     private var importSuccessBinding: Binding<Bool> {
@@ -156,6 +196,57 @@ struct ManageView: View {
             isPresentingExportSheet = true
         } catch {
             exportErrorMessage = error.localizedDescription
+        }
+    }
+
+    private var backupImportSuccessBinding: Binding<Bool> {
+        Binding(
+            get: { backupImportResultMessage != nil },
+            set: { if !$0 { backupImportResultMessage = nil } }
+        )
+    }
+
+    private var backupImportErrorBinding: Binding<Bool> {
+        Binding(
+            get: { backupImportErrorMessage != nil },
+            set: { if !$0 { backupImportErrorMessage = nil } }
+        )
+    }
+
+    private func loadBackup(from url: URL) {
+        guard url.startAccessingSecurityScopedResource() else {
+            backupImportErrorMessage = "파일에 접근할 수 없습니다."
+            return
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let payload = try decoder.decode(BackupPayload.self, from: data)
+
+            if try BackupImporter.hasExistingData(using: modelContext) {
+                pendingBackupPayload = payload
+                isPresentingMergeConfirmation = true
+            } else {
+                let count = try BackupImporter.apply(payload, strategy: .merge, using: modelContext)
+                backupImportResultMessage = "세션 \(count)개를 복원했습니다."
+            }
+        } catch {
+            backupImportErrorMessage = BackupImportError.invalidFile.localizedDescription
+        }
+    }
+
+    private func performBackupImport(strategy: BackupImportStrategy) {
+        guard let payload = pendingBackupPayload else { return }
+        pendingBackupPayload = nil
+
+        do {
+            let count = try BackupImporter.apply(payload, strategy: strategy, using: modelContext)
+            backupImportResultMessage = "세션 \(count)개를 복원했습니다."
+        } catch {
+            backupImportErrorMessage = error.localizedDescription
         }
     }
 
