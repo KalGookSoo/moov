@@ -31,6 +31,8 @@ flowchart TD
     Templates --> TemplateForm["템플릿 편집"]
     Manage --> ExerciseCatalog["종목 카탈로그"]
     Manage --> TagCatalog["태그 카탈로그"]
+    Manage --> UsageGuideList["이용 가이드 목록"]
+    UsageGuideList --> UsageGuideDetail["이용 가이드 상세"]
 ```
 
 ## 화면 ↔ UC/FR 매핑
@@ -50,6 +52,7 @@ flowchart TD
 | 템플릿 목록 / 템플릿 편집 | UC-06, FR-09 |
 | 종목 카탈로그 | UC-07, FR-11 |
 | 태그 카탈로그 | UC-08, FR-12 |
+| 이용 가이드 목록 / 이용 가이드 상세 | UC-12, FR-23 |
 
 ## 참고
 

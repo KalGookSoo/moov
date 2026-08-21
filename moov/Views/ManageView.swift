@@ -69,6 +69,12 @@ struct ManageView: View {
                 }
 
                 Section("도움말") {
+                    NavigationLink {
+                        UsageGuideListView()
+                    } label: {
+                        Label("이용 가이드", systemImage: "book")
+                    }
+
                     Button {
                         isShowingOnboarding = true
                     } label: {
